@@ -1,0 +1,8 @@
+Sat Jan 19 13:50:03 2019: Information: logfilename element GetText:/home/jdellaria/Desktop/logAirportTalk.txt
+Sat Jan 19 13:50:03 2019: Information: logvalue element GetText:logWarning
+Sat Jan 19 13:50:03 2019: Information: logprintscreen element GetText:true
+Sat Jan 19 13:50:03 2019: Information: logPrintScreen = true
+Sat Jan 19 13:50:03 2019: Information: logprintfile element GetText:true
+Sat Jan 19 13:50:03 2019: Information: logPrintFile = true
+Sat Jan 19 13:50:03 2019: Information: logprinttime element GetText:true
+Sat Jan 19 13:50:03 2019: Information: logPrintTime = true
