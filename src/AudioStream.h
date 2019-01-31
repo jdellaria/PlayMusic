@@ -89,9 +89,6 @@ public:
 	snd_pcm_t *pcm_handle;
 	unsigned char * buff;
 
-
-//	SRC_STATE *resamp_st;
-//	SRC_DATA resamp_sd;
 	__u16 *resamp_buf;
 	MP3Stream mp3Stream;
 };

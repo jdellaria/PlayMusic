@@ -220,6 +220,12 @@ snd_pcm_t * AudioStream::OpenALSADriver(int numberOfChannels, int samplingRate)
 	buff = (unsigned char *) malloc(chunk_size);
 
 	message = __func__;
+	message.append(" frames: ");
+	sprintf(ibuffer, "%d", frames);
+	message.append(ibuffer);
+	myLog.print(logInformation, message);
+
+	message = __func__;
 	message.append(" buff_size: ");
 	sprintf(ibuffer, "%d", chunk_size);
 	message.append(ibuffer);
