@@ -107,7 +107,8 @@ int AudioStream::CloseALSADriver()
 
 snd_pcm_t * AudioStream::OpenALSADriver(int numberOfChannels, int samplingRate)
 {
-	unsigned int pcm, tmp, dir;
+	unsigned int pcm, tmp;
+	int dir;
 	snd_pcm_hw_params_t *params;
 
 	string message;
@@ -157,13 +158,18 @@ snd_pcm_t * AudioStream::OpenALSADriver(int numberOfChannels, int samplingRate)
 		myLog.print(logError, message);
 	}
 
-	if (pcm = snd_pcm_hw_params_set_rate_near(pcm_handle, params, &sample_rate, 0) < 0)
+	if (pcm = snd_pcm_hw_params_set_rate_near(pcm_handle, params, &sample_rate, &dir) < 0)
 	{
 		message = __func__;
 		message.append(" Can't set rate. ");
 		message.append(snd_strerror(pcm));
 		myLog.print(logError, message);
 	}
+
+	/* Set period size to 4096 frames. */
+	frames = 1024;
+	snd_pcm_hw_params_set_period_size_near(pcm_handle, params, &frames, &dir);
+
 	/* Write parameters */
 	if (pcm = snd_pcm_hw_params(pcm_handle, params) < 0)
 	{
@@ -205,7 +211,7 @@ snd_pcm_t * AudioStream::OpenALSADriver(int numberOfChannels, int samplingRate)
 		myLog.print(logInformation, message);
 	}
 
-	snd_pcm_hw_params_get_rate(params, &tmp, 0);
+	snd_pcm_hw_params_get_rate(params, &tmp, &dir);
 
 	message = __func__;
 	message.append(" rate: ");
@@ -214,7 +220,7 @@ snd_pcm_t * AudioStream::OpenALSADriver(int numberOfChannels, int samplingRate)
 	myLog.print(logInformation, message);
 
 	/* Allocate buffer to hold single period */
-	snd_pcm_hw_params_get_period_size(params, &frames, 0);
+	snd_pcm_hw_params_get_period_size(params, &frames, &dir);
 
 	chunk_size = frames * channels * 2 /* 2 -> sample size */;
 	buff = (unsigned char *) malloc(chunk_size);
@@ -232,6 +238,12 @@ snd_pcm_t * AudioStream::OpenALSADriver(int numberOfChannels, int samplingRate)
 	myLog.print(logInformation, message);
 
 	snd_pcm_hw_params_get_period_time(params, &tmp, NULL);
+	message = __func__;
+	message.append(" period_time: ");
+	sprintf(ibuffer, "%d", tmp);
+	message.append(ibuffer);
+	myLog.print(logInformation, message);
+
 	return (pcm_handle);
 }
 
