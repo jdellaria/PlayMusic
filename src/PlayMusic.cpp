@@ -24,11 +24,27 @@
 #include <sys/time.h>
 #include <DLog.h>
 #include <LinuxCommand.h>
-
-
 #include <unistd.h>
 
-#include "MP3Stream.h"
+#include "AudioStream.h"
+
+#define USE_SOUND_CARD
+
+#ifdef USE_SOUND_CARD
+#include <alsa/asoundlib.h>
+
+#define PCM_DEVICE "default"
+snd_pcm_t *pcm_handle;
+snd_pcm_uframes_t frames;
+__u8 *buff;
+unsigned int pcm;
+int buff_size, loops;
+int rate, channels, seconds;
+unsigned int tmp, dir;
+snd_pcm_hw_params_t *params;
+#endif
+
+
 #include "MusicDB.h"
 
 #include "client_http.hpp"
@@ -82,26 +98,15 @@ configurationFile myConfig;
 ApplicationModes myAppModes;
 UDPServer dataGramServer;
 
-typedef enum data_type_t {
-	AUD_TYPE_NONE = 0,
-	AUD_TYPE_ALAC,
-	AUD_TYPE_WAV,
-	AUD_TYPE_MP3,
-	AUD_TYPE_OGG,
-	AUD_TYPE_AAC,
-	AUD_TYPE_URLMP3,
-	AUD_TYPE_PLS,
-	AUD_TYPE_PCM,
-	AUD_TYPE_FLAC,
-} data_type_t;
-
-
 playActions playMode = PLAY_ACTION_PLAY;
 MP3Stream mp3Stream;
+AudioStream auds;
 
 extern int playAutomatic;
 
 int PlaySong(string audioFileName, data_type_t adt);
+int PlaySongS(string audioFileName, data_type_t adt);
+snd_pcm_t * OpenSound(unsigned char * buff, snd_pcm_uframes_t frames);
 
 int main(int argc, char* const argv[])
 {
@@ -220,7 +225,7 @@ int main(int argc, char* const argv[])
 				message.append(": PlaySong FileName - ");
 				message.append(pQR.location);
 				myLog.print(logInformation, message);
-				songFD = PlaySong(pQR.location,AUD_TYPE_NONE);
+				songFD = PlaySong(pQR.location, AUD_TYPE_NONE);
 			}
 			else
 			{
@@ -230,10 +235,6 @@ int main(int argc, char* const argv[])
 				myLog.print(logWarning, message);
 				sleep(5);
 			}
-
-
-//		PlaySong("/RAID/Music/Album Music/The Kooks/The Best Of... So Far/1-09 Sofa Song.mp3",AUD_TYPE_MP3);
-
 		returnValue = eventHandler();
 		if ((myAppModes.getPlayMode() == PLAY_ACTION_EXIT))
 			break;
@@ -252,63 +253,55 @@ int main(int argc, char* const argv[])
 	myLog.print(logWarning, message);
 }
 
-
-int PlaySong(string audioFileName, data_type_t adt)  // orig
+int PlaySong(string audioFileName, data_type_t adt)
 {
-	__u8 *buf;
 	int size;
-	int returnValue;
+	int audioStreamHandle = 0;
 	string message;
-	char ibuffer [33];
-	string sbuffer;
-	LinuxCommand myCommand;
-	char errorMessageBuffer[2048];
+	int bytesRead = 0;
 
-//	songFD = mp3Stream.Open(audioFileName);
-//			auds.Open(audioFileName,adt);
+	playMode = PLAY_ACTION_PLAY;
 
-
-	const char *darg[4]={MP3PLAYER,NULL, NULL,NULL};
-	darg[1] = audioFileName.c_str();
-
-	message = __func__;
-	message.append(": Playing Song: ");
-	message.append(audioFileName);
-	myLog.print(logInformation, message);
-
-	myCommand.Execute(darg,errorMessageBuffer,sizeof(errorMessageBuffer)-2);
-	if (strlen(errorMessageBuffer) > 0)
-	{
-		return (-1); // on error errorMessageBuffer has the error string
-	}
-	else
-	{
-		return (0);
-	}
-
-
+	songFD = auds.Open(audioFileName,adt);
 	message = __func__;
 	message.append(": opening file:");
 	message.append(audioFileName);
 	myLog.print(logDebug, message);
-	returnValue=0;
-	playMode = PLAY_ACTION_PLAY;
 
 	while(playMode == PLAY_ACTION_PLAY)
 	{
 		message = __func__;
 		message.append(": playMode == PLAY_ACTION_PLAY");
-		myLog.print(logDebug, message);
-
-		eventHandler();
-
+//		myLog.print(logDebug, message);
+		audioStreamHandle = auds.GetNextSample(&auds.buff, (int*)&size); // buff and size do not do anything. we do not have to pass this information
+		if ( bytesRead = read(audioStreamHandle, auds.buff, auds.chunk_size) == 0)
+		{
+			message = __func__;
+			message.append(" end of Audio file. No bytes read.");
+			myLog.print(logDebug, message);
+			playMode = PLAY_ACTION_NEXTSONG;
+		}
+		else
+		{
+			if (pcm = snd_pcm_writei(auds.pcm_handle, auds.buff, auds.frames) == -EPIPE)
+			{
+				message = __func__;
+				message.append(" XRUN.");
+				myLog.print(logDebug, message);
+				snd_pcm_prepare(auds.pcm_handle);
+			} else if (pcm < 0) {
+				message = __func__;
+				message.append("Can't write to PCM device. ");
+				message.append(snd_strerror(pcm));
+				myLog.print(logError, message);
+			}
+		}
+//		returnValue = eventHandler();
 	}
+	auds.Close();
 
-//	message = __func__;
-//	message.append(": auds.Close");
-//	myLog.print(logDebug, message);
-//	mp3Stream.Close();
 
+	return 0;
 }
 
 #define MAIN_EVENT_TIMEOUT 3 // sec unit

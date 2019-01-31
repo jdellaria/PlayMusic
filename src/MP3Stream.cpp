@@ -5,8 +5,8 @@
  *      Author: jdellaria
  */
 
-#include "MP3Stream.h"
-//#include "AudioStream.h"
+//#include "MP3Stream.h"
+#include "AudioStream.h"
 #include "APMusic.h"
 #include <iostream>
 #include <stdio.h>
@@ -17,13 +17,10 @@
 #include <fcntl.h>
 #include <string.h>
 #include <errno.h>
-
-#include <unistd.h>
-
 #include <DLog.h>
 
 extern DLog myLog;
-//extern AudioStream auds;
+extern AudioStream auds;
 
 MP3Stream::MP3Stream() {
 	// TODO Auto-generated constructor stub
@@ -40,11 +37,18 @@ int MP3Stream::Open(string audioFileName)
 
 {
 	int returnValue;
+	string message;
+
+	message = "MP3Stream.cpp :";
+	message.append(__func__);
+	message.append(": startPlay");
+	myLog.print(logDebug, message);
+
 	mp3FileName=audioFileName;
-//	auds.sample_rate=DEFAULT_SAMPLE_RATE;
-//	auds.data_type = AUD_TYPE_MP3;
+	auds.sample_rate=DEFAULT_SAMPLE_RATE;
+	auds.data_type = AUD_TYPE_MP3;
 	returnValue = startPlay(audioFileName);
-//	auds.chunk_size=auds.ClacChunkSize(auds.sample_rate);
+	auds.chunk_size=auds.ClacChunkSize(auds.sample_rate);
 	return returnValue;
  erexit:
 	Close();
@@ -53,18 +57,36 @@ int MP3Stream::Open(string audioFileName)
 
 int MP3Stream::Close()
 {
+	string message;
+
+	message = "MP3Stream.cpp :";
+	message.append(__func__);
+	message.append(": StopDecoder");
+	myLog.print(logDebug, message);
+
 //	printf("MP3Stream::Close Decoder programID = %d\n",programID);
 	if(dfd>=0) close(dfd);
 	StopDecoder();
 	return 0;
 }
 
+int MP3Stream::GetNextSample(__u8 **data, int *size)
+{
+	data_source_t ds;
+	ds.type = DESCRIPTOR;
+	ds.u.fd = dfd = fdin;
+//#ifndef USE_SOUND_CARD
+//	return auds.WritePCM(buffer, data, size, auds.chunk_size, &ds);
+//#else
+	return fdin;
+//#endif
+}
 
 int MP3Stream::startPlay(string fileName)
 {
-
-//	char *darg[7]={MP3PLAYER,"-s","-r", "44100", "--stereo", NULL, NULL}; // this forces play at a rate of 44100 and in stereo
-	char *darg[7]={MP3PLAYER,"-r", "44100", "--stereo", NULL, NULL}; // this forces play at a rate of 44100 and in stereo
+	string message;
+	char *darg[7]={MP3PLAYER,"-s","-r", "44100", "--stereo", NULL, NULL}; // this forces play at a rate of 44100 and in stereo
+//	char *darg[7]={MP3PLAYER, NULL, NULL}; // this forces play at a rate of 44100 and in stereo
 
 	char* name;
 
@@ -73,13 +95,21 @@ int MP3Stream::startPlay(string fileName)
 	name = new char[fileName.length() + 1]; //converting string to char*
 	strcpy(name, fileName.c_str());
 
-	darg[4] = name;
+//	darg[1] = name;
+	darg[5] = name;
+
+	message = __func__;
+	message.append(": Playing Song: ");
+	message.append(fileName);
+	myLog.print(logInformation, message);
+
+	sleep(2);
+
 	dpid=ExecuteDecoder(darg,&fdin,NULL,NULL);
+
 	dfd = fdin; //JON
 	return(fdin);
 }
-
-
 
 int MP3Stream::ExecuteDecoder(char* const argv[], int *infd, int *outfd, int *errfd)
 {
@@ -161,8 +191,6 @@ int MP3Stream::ExecuteDecoder(char* const argv[], int *infd, int *outfd, int *er
 	readFlag = 1;
 	return pid;
 }
-
-
 
 int MP3Stream::StopDecoder()
 {

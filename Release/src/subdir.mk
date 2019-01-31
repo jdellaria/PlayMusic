@@ -5,6 +5,7 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
 ../src/ApplicationModes.cpp \
+../src/AudioStream.cpp \
 ../src/MP3Stream.cpp \
 ../src/MusicDB.cpp \
 ../src/PlayMusic.cpp \
@@ -13,6 +14,7 @@ CPP_SRCS += \
 
 OBJS += \
 ./src/ApplicationModes.o \
+./src/AudioStream.o \
 ./src/MP3Stream.o \
 ./src/MusicDB.o \
 ./src/PlayMusic.o \
@@ -21,6 +23,7 @@ OBJS += \
 
 CPP_DEPS += \
 ./src/ApplicationModes.d \
+./src/AudioStream.d \
 ./src/MP3Stream.d \
 ./src/MusicDB.d \
 ./src/PlayMusic.d \
