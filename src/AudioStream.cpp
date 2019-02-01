@@ -63,14 +63,16 @@ int AudioStream::Open(string audioFileName, data_type_t adt)
 		myLog.print(logError, message);
 		break;
 	}
+	if (rval == 0) //Error occurred Opening file
+	{
+		message = "AudioStream.cpp :";
+		message.append(__func__);
+		message.append(": error");
+		myLog.print(logError, message);
+		Close();
+		return 0;
+	}
 	return rval;
- erexit:
-	message = "AudioStream.cpp :";
-	message.append(__func__);
-	message.append(": error");
-	myLog.print(logError, message);
-	Close();
-	return NULL;
 }
 
 int AudioStream::Close()

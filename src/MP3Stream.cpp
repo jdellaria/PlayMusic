@@ -48,11 +48,13 @@ int MP3Stream::Open(string audioFileName)
 	auds.sample_rate=DEFAULT_SAMPLE_RATE;
 	auds.data_type = AUD_TYPE_MP3;
 	returnValue = startPlay(audioFileName);
+	if (returnValue == 0)
+	{
+		Close();
+		return 0;
+	}
 	auds.chunk_size=auds.ClacChunkSize(auds.sample_rate);
 	return returnValue;
- erexit:
-	Close();
-	return -1;
 }
 
 int MP3Stream::Close()
@@ -85,6 +87,7 @@ int MP3Stream::GetNextSample(__u8 **data, int *size)
 int MP3Stream::startPlay(string fileName)
 {
 	string message;
+	char ibuffer [33];
 	char *darg[7]={MP3PLAYER,"-s","-r", "44100", "--stereo", NULL, NULL}; // this forces play at a rate of 44100 and in stereo
 //	char *darg[7]={MP3PLAYER, NULL, NULL}; // this forces play at a rate of 44100 and in stereo
 
@@ -106,8 +109,23 @@ int MP3Stream::startPlay(string fileName)
 	sleep(2);
 
 	dpid=ExecuteDecoder(darg,&fdin,NULL,NULL);
+	if (dpid == 0) // ExecuteDecoder could not execte the commange and we have an error
+	{
+		message = __func__;
+		message.append(": ExecuteDecoder returned an error. errno = ");
+		sprintf(ibuffer, "%d", errno);
+		message.append(ibuffer);
+		myLog.print(logError, message);
+		return(0);
+	}
 
 	dfd = fdin; //JON
+
+	message = __func__;
+	message.append(": file descriptor = ");
+	sprintf(ibuffer, "%d", dpid);
+	message.append(ibuffer);
+	myLog.print(logDebug, message);
 	return(fdin);
 }
 
@@ -121,7 +139,8 @@ int MP3Stream::ExecuteDecoder(char* const argv[], int *infd, int *outfd, int *er
 	 2.any parameters. (-s)
 	 3.name of music file
 	 */
-
+	string message;
+	char ibuffer [33];
 	int infds[2];
 	int errfds[2];
 	int outfds[2];
@@ -154,8 +173,13 @@ int MP3Stream::ExecuteDecoder(char* const argv[], int *infd, int *outfd, int *er
 		}
 		close(outfds[1]);
 
-		execvp(argv[0], argv);
-//Jon		exit(0);
+		execvp(argv[0], argv); // If this call returns, then there was an error
+		message = __func__;
+		message.append(": execvp returned an error. errno = ");
+		sprintf(ibuffer, "%d", errno);
+		message.append(ibuffer);
+		myLog.print(logError, message);
+		return (0);
 	}
 
 	if(infd)

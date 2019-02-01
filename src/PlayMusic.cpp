@@ -108,6 +108,7 @@ int PlaySong(string audioFileName, data_type_t adt);
 int PlaySongS(string audioFileName, data_type_t adt);
 snd_pcm_t * OpenSound(unsigned char * buff, snd_pcm_uframes_t frames);
 
+
 int main(int argc, char* const argv[])
 {
 	int returnValue;
@@ -267,7 +268,15 @@ int PlaySong(string audioFileName, data_type_t adt)
 	message.append(": opening file:");
 	message.append(audioFileName);
 	myLog.print(logDebug, message);
-
+	if (songFD == 0) // error occurred
+	{
+		songFD = auds.Open(audioFileName,adt);
+		message = __func__;
+		message.append(": opening file:");
+		message.append(audioFileName);
+		myLog.print(logError, message);
+		return (0);
+	}
 	while(playMode == PLAY_ACTION_PLAY)
 	{
 		message = __func__;
