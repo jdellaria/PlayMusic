@@ -25,7 +25,7 @@ class MP3Stream {
 public:
 	MP3Stream();
 	virtual ~MP3Stream();
-	int GetNextSample( __u8 **data, int *size);
+	int GetNextSample( __u8 *data, int size);
 	int Open(string audioFileName);
 	int Close();
 

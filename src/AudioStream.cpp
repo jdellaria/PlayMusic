@@ -32,7 +32,7 @@ int AudioStream::Open(string audioFileName, data_type_t adt)
 	string message;
 
 //	channels=2; //default is stereo
-	OpenALSADriver(2, 44100); // channes = 2 sample rate = 44100
+	OpenALSADriver(2, 44100, 1024); // channes = 2 sample rate = 44100 frames = 1024
 	if(adt==AUD_TYPE_NONE)
 	{
 		message = "AudioStream.cpp :";
@@ -107,7 +107,28 @@ int AudioStream::CloseALSADriver()
 	free(buff);
 }
 
-snd_pcm_t * AudioStream::OpenALSADriver(int numberOfChannels, int samplingRate)
+
+int AudioStream::SendPCMToALSADriver()
+{
+	string message;
+	unsigned int pcm;
+
+	if ((pcm = snd_pcm_writei(pcm_handle, buff, frames)) == -EPIPE) // send sound to the ALSA driver
+	{
+		message = __func__;
+		message.append(" XRUN.");
+		myLog.print(logDebug, message);
+		snd_pcm_prepare(pcm_handle);
+	} else if (pcm < 0) {
+		message = __func__;
+		message.append("Can't write to PCM device. ");
+		message.append(snd_strerror(pcm));
+		myLog.print(logError, message);
+	}
+	return pcm;
+}
+
+snd_pcm_t * AudioStream::OpenALSADriver(int numberOfChannels, int samplingRate, int numberOfFrames)
 {
 	unsigned int pcm, tmp;
 	int dir;
@@ -116,6 +137,7 @@ snd_pcm_t * AudioStream::OpenALSADriver(int numberOfChannels, int samplingRate)
 	string message;
 	char ibuffer [33];
 
+	frames = numberOfFrames;
 	sample_rate = samplingRate;
 	channels = numberOfChannels;
 
@@ -168,8 +190,7 @@ snd_pcm_t * AudioStream::OpenALSADriver(int numberOfChannels, int samplingRate)
 		myLog.print(logError, message);
 	}
 
-	/* Set period size to 4096 frames. */
-	frames = 1024;
+
 	snd_pcm_hw_params_set_period_size_near(pcm_handle, params, &frames, &dir);
 
 	/* Write parameters */
@@ -250,19 +271,16 @@ snd_pcm_t * AudioStream::OpenALSADriver(int numberOfChannels, int samplingRate)
 }
 
 
-int AudioStream::GetNextSample( __u8 **data, int *size)
+int AudioStream::GetNextSample()
 {
-	int rval;
+	int audioStreamHandle;
+	int bytesRead;
 	string message;
 
 	switch(data_type){
 	case AUD_TYPE_URLMP3:
 	case AUD_TYPE_MP3:
-//		message = "AudioStream.cpp :";
-//		message.append(__func__);
-//		message.append(": ");
-//		myLog.print(logDebug, message);
-		rval=mp3Stream.GetNextSample( data, size); // returns the file handle for mp3 audio stream
+		bytesRead = mp3Stream.GetNextSample(buff, chunk_size); // returns the file handle for mp3 audio stream
 		break;
 	case AUD_TYPE_NONE:
 		message = "AudioStream.cpp :";
@@ -271,102 +289,25 @@ int AudioStream::GetNextSample( __u8 **data, int *size)
 		myLog.print(logError, message);
 		return -1;
 	}
-	return rval;
+	return bytesRead;
 }
 
-int AudioStream::WritePCM( __u8 *buffer, __u8 **data, int *size, int bsize, data_source_t *ds)
+int AudioStream::WritePCM( __u8 *data, int size, data_source_t *ds)
 {
 	int bytesRead = 0;
-	bytesRead = read(ds->u.fd, buffer, (size_t) &size);
-	if (bytesRead == 0) {
-		printf("error.\n");
-			return 0;
+	string message;
+
+	//if channes = 2 sample rate = 44100 frames = 1024 then all we need to do is a simple read. if not, we need to do bit manipulation.
+	bytesRead = read(ds->u.fd, data, size);
+	if (bytesRead < 0)
+	{
+		message = "AudioStream.cpp :";
+		message.append(__func__);
+		message.append(": Error Reading PCM data");
+		myLog.print(logError, message);
+		return -1;
 	}
 	return (bytesRead);
-
-	__u8 one[4];
-	int count=0;
-	int bpos=0;
-	__u8 *bp=buffer;
-	int i,nodata=0;
-	__s16 *resamp=NULL, *pr=NULL;
-
-	bits_write(&bp,1,3,&bpos); // channel=1, stereo
-	bits_write(&bp,0,4,&bpos); // unknown
-	bits_write(&bp,0,8,&bpos); // unknown
-	bits_write(&bp,0,4,&bpos); // unknown
-	if(bsize!=4096)
-		bits_write(&bp,1,1,&bpos); // hassize
-	else
-		bits_write(&bp,0,1,&bpos); // hassize
-	bits_write(&bp,0,2,&bpos); // unused
-	bits_write(&bp,1,1,&bpos); // is-not-compressed
-	if(bsize!=4096){
-		bits_write(&bp,(bsize>>24)&0xff,8,&bpos); // size of data, integer, big endian
-		bits_write(&bp,(bsize>>16)&0xff,8,&bpos);
-		bits_write(&bp,(bsize>>8)&0xff,8,&bpos);
-		bits_write(&bp,bsize&0xff,8,&bpos);
-	}
-	while(1){
-		if(pr){
-			if(channels==1)
-				*((__s16*)one)=*pr;
-			else
-				*((__s16*)one)=*pr++;
-			*((__s16*)one+1)=*pr++;
-		}else {
-			switch(ds->type){
-			case DESCRIPTOR:
-				if(channels==1){
-					if(read(ds->u.fd, one, 2)!=2) nodata=1;
-					*((__s16*)one+1)=*((__s16*)one);
-				}else{
-					if(read(ds->u.fd, one, 4)!=4) nodata=1;
-				}
-				break;
-			case STREAM:
-				if(channels==1){
-					if(fread(one,1,2,ds->u.inf)!=2) nodata=1;
-					*((__s16*)one+1)=*((__s16*)one);
-				}else{
-					if(fread(one,1,4,ds->u.inf)!=4) nodata=1;
-				}
-				break;
-			case MEMORY:
-				if(channels==1){
-					if(ds->u.mem.size<=count*2) nodata=1;
-					*((__s16*)one)=ds->u.mem.data[count];
-					*((__s16*)one+1)=*((__s16*)one);
-				}else{
-					if(ds->u.mem.size<=count*4) nodata=1;
-					*((__s16*)one)=ds->u.mem.data[count*2];
-					*((__s16*)one+1)=ds->u.mem.data[count*2+1];
-				}
-				break;
-			}
-		}
-		if(nodata) break;
-
-		bits_write(&bp,one[1],8,&bpos);
-		bits_write(&bp,one[0],8,&bpos);
-		bits_write(&bp,one[3],8,&bpos);
-		bits_write(&bp,one[2],8,&bpos);
-		if(++count==bsize) break;
-	}
-	if(!count){
-		*size=bp-buffer;
-		if(bpos) *size+=1;
-		*data=buffer;
-		return -1; // when no data at all, it should stop playing
-	}
-	/* when readable size is less than bsize, fill 0 at the bottom */
-	for(i=0;i<(bsize-count)*4;i++){
-		bits_write(&bp,0,8,&bpos);
-	}
-	*size=bp-buffer;
-	if(bpos) *size+=1;
-	*data=buffer;
-	return 0;
 }
 
 int AudioStream::ClacChunkSize(int sample_rate)

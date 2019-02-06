@@ -70,14 +70,15 @@ public:
 	AudioStream();
 	virtual ~AudioStream();
 
-	int WritePCM( __u8 *buffer, __u8 **data, int *size, int bsize, data_source_t *ds);
+	int WritePCM( __u8 *data, int size, data_source_t *ds);
 	int Open(string audioFileName, data_type_t adt);
 	int Close();
-	int GetNextSample( __u8 **data, int *size);
+	int GetNextSample();
 	int ClacChunkSize(int sample_rate);
 	data_type_t GetDataType(const char *fname);
-	snd_pcm_t * OpenALSADriver(int numberOfChannels, int samplingRate);
+	snd_pcm_t * OpenALSADriver(int numberOfChannels, int samplingRate, int numberOfFrames);
 	int CloseALSADriver();
+	int SendPCMToALSADriver();
 
 	void *stream;
 	unsigned sample_rate;

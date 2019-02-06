@@ -72,16 +72,15 @@ int MP3Stream::Close()
 	return 0;
 }
 
-int MP3Stream::GetNextSample(__u8 **data, int *size)
+int MP3Stream::GetNextSample( __u8 *data, int size)
 {
 	data_source_t ds;
+	int bytesRead;
 	ds.type = DESCRIPTOR;
 	ds.u.fd = dfd = fdin;
-//#ifndef USE_SOUND_CARD
-//	return auds.WritePCM(buffer, data, size, auds.chunk_size, &ds);
-//#else
-	return fdin;
-//#endif
+
+	return auds.WritePCM(data, size, &ds);
+
 }
 
 int MP3Stream::startPlay(string fileName)

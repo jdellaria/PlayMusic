@@ -256,10 +256,9 @@ int main(int argc, char* const argv[])
 
 int PlaySong(string audioFileName, data_type_t adt)
 {
-	int size;
-	int audioStreamHandle = 0;
 	string message;
 	int bytesRead = 0;
+	int returnValue;
 
 	playMode = PLAY_ACTION_PLAY;
 
@@ -282,8 +281,9 @@ int PlaySong(string audioFileName, data_type_t adt)
 		message = __func__;
 		message.append(": playMode == PLAY_ACTION_PLAY");
 //		myLog.print(logDebug, message);
-		audioStreamHandle = auds.GetNextSample(&auds.buff, (int*)&size); // buff and size do not do anything. we do not have to pass this information
-		if ( bytesRead = read(audioStreamHandle, auds.buff, auds.chunk_size) == 0)
+		bytesRead = auds.GetNextSample(); // this should get PCM data nad put all the info in the right place to send to ALSA Driver
+		if ( bytesRead == 0)
+
 		{
 			message = __func__;
 			message.append(" end of Audio file. No bytes read.");
@@ -292,24 +292,12 @@ int PlaySong(string audioFileName, data_type_t adt)
 		}
 		else
 		{
-			if (pcm = snd_pcm_writei(auds.pcm_handle, auds.buff, auds.frames) == -EPIPE)
-			{
-				message = __func__;
-				message.append(" XRUN.");
-				myLog.print(logDebug, message);
-				snd_pcm_prepare(auds.pcm_handle);
-			} else if (pcm < 0) {
-				message = __func__;
-				message.append("Can't write to PCM device. ");
-				message.append(snd_strerror(pcm));
-				myLog.print(logError, message);
-			}
+			auds.SendPCMToALSADriver();
+
 		}
-//		returnValue = eventHandler();
+		returnValue = eventHandler();
 	}
 	auds.Close();
-
-
 	return 0;
 }
 
