@@ -100,12 +100,13 @@ int MP3Stream::startPlay(string fileName)
 //	darg[1] = name;
 	darg[5] = name;
 
-	message = __func__;
+	message = "MP3Stream.cpp :";
+	message.append( __func__);
 	message.append(": Playing Song: ");
 	message.append(fileName);
 	myLog.print(logInformation, message);
 
-	sleep(2);
+//	sleep(2);
 
 	dpid=ExecuteDecoder(darg,&fdin,NULL,NULL);
 	if (dpid == 0) // ExecuteDecoder could not execte the commange and we have an error

@@ -98,11 +98,11 @@ configurationFile myConfig;
 ApplicationModes myAppModes;
 UDPServer dataGramServer;
 
-playActions playMode = PLAY_ACTION_PLAY;
+//playActions playMode = PLAY_ACTION_PLAY;
 MP3Stream mp3Stream;
 AudioStream auds;
 
-extern int playAutomatic;
+//extern int playAutomatic;
 
 int PlaySong(string audioFileName, data_type_t adt);
 int PlaySongS(string audioFileName, data_type_t adt);
@@ -115,6 +115,8 @@ int main(int argc, char* const argv[])
 	string message;
 	char ibuffer [33];
 	struct playQRecord pQR;
+
+	pQR.id = 0;
 
 	if (argc == 2) // if there is an argument, then assume it is the configuration file
 	{
@@ -135,13 +137,28 @@ int main(int argc, char* const argv[])
 	server.resource["^/status"]["GET"] = [](shared_ptr<HttpServer::Response> response, shared_ptr<HttpServer::Request> request)
 	{
 	stringstream stream;
-	string json_string = "{\"firstName\": \"John\",\"lastName\": \"Smith\",\"age\": 25}";
+//	string json_string = "{\"firstName\": \"John\",\"lastName\": \"Smith\",\"age\": 25}";
 	string json_status_string;
+	struct playQRecord pQRCurrentSong;
+	pQRCurrentSong = getCurrentSongInPlayQ();
 
-	stream << "{";
-	stream << "exitMode: " << myAppModes.getPlayMode() << ",";
-	stream << "playMode: " << myAppModes.getPlayMode() << ",";
-	stream << "networkMode: " << myAppModes.getNetworkMode();
+	stream << "{\n";
+	stream << "exitMode: " << myAppModes.getPlayMode() << ",\n";
+	stream << "playMode: " << myAppModes.getPlayMode() << ",\n";
+	stream << "networkMode: " << myAppModes.getNetworkMode() << ",\n";
+	if (pQRCurrentSong.id == 0)
+	{
+		stream << "Current Song: No Song Currently Playing\n";
+	}
+	else
+	{
+		stream << "Current Track: " << pQRCurrentSong.tracknumber << ",\n";
+		stream << "Current Song: " << pQRCurrentSong.name << ",\n";
+		stream << "Current Artist: " << pQRCurrentSong.artist << ",\n";
+		stream << "Current Album: " << pQRCurrentSong.album << ",\n";
+		stream << "Current Song Year: " << pQRCurrentSong.songyear << "\n";
+	}
+
 	stream << "}";
 
 //	stream << json_string;
@@ -186,61 +203,72 @@ int main(int argc, char* const argv[])
 
 
 	myAppModes.setPlayMode (PLAY_ACTION_PLAY);
-	myAppModes.setNetworkMode(NETWORK_ACTION_DISCONNECT);
+	myAppModes.setContinuous();
+//	myAppModes.setManual();
+//	myAppModes.setNetworkMode(NETWORK_ACTION_DISCONNECT);
 	message = "airportAddress is: ";
 	message.append(myConfig.airportAddress + "\n");
 	myLog.print(logWarning, message);
 
 	OpenDBConnection();
-	playAutomatic = 1;
+//	playAutomatic = 1;
+
 
 	while ((myAppModes.getPlayMode() != PLAY_ACTION_QUIT))
 	{
-		message = __func__;
+		message = "PlayMusic.cpp :";
+		message.append(__func__);
 		message.append(": Wile Loop - ");
-		message.append("networkMode = ");
-		sprintf(ibuffer, "%d", myAppModes.getNetworkMode());
-		message.append(ibuffer);
+//		message.append("networkMode = ");
+//		sprintf(ibuffer, "%d", myAppModes.getNetworkMode());
+//		message.append(ibuffer);
 		sprintf(ibuffer, "%d", myAppModes.getPlayMode());
 		message.append("playMode = ");
 		message.append(ibuffer);
 		myLog.print(logDebug, message);
-
-			message = __func__;
-			message.append(": playMode == PLAY_ACTION_PLAY getting next song record"); //Jon
+		message = "PlayMusic.cpp :";
+		message.append(__func__);
+		message.append(": playMode == PLAY_ACTION_PLAY getting next song record"); //Jon
+		myLog.print(logDebug, message);
+		if (myAppModes.getApplicationMode() != APPLICATION_ACTION_CONTINUOUS)
+		{
+			message = "PlayMusic.cpp :";
+			message.append(__func__);
+			message.append(": play mode is manual wait a few seconds"); //Jon
 			myLog.print(logDebug, message);
-			pQR = getNextSongRecord();
-			message = __func__;
-			message.append(": playMode == PLAY_ACTION_PLAY returned from get song record"); //Jon
-			myLog.print(logDebug, message);
-			if (pQR.id != 0)
+			sleep (5);
+		}
+		pQR = getNextSongRecord();
+		if (pQR.id != 0)
+		{
+			if (asciiToUtf8(pQR.location, 255) != 1)
 			{
-				if (asciiToUtf8(pQR.location, 255) != 1)
-				{
-					message = __func__;
-					message.append(":  UTF Conversion error FileName - ");
-					message.append(pQR.location);
-					myLog.print(logError, message);
-				}
-				message = __func__;
-				message.append(": PlaySong FileName - ");
+				message = "PlayMusic.cpp :";
+				message.append(__func__);
+				message.append(":  UTF Conversion error FileName - ");
 				message.append(pQR.location);
-				myLog.print(logInformation, message);
-				songFD = PlaySong(pQR.location, AUD_TYPE_NONE);
+				myLog.print(logError, message);
 			}
-			else
-			{
-				playMode = PLAY_ACTION_STOP;
-				message = __func__;
-				message.append(":  No song to play");
-				myLog.print(logWarning, message);
-				sleep(5);
-			}
+			message = "PlayMusic.cpp :";
+			message.append(__func__);
+			message.append(": PlaySong FileName - ");
+			message.append(pQR.location);
+			myLog.print(logInformation, message);
+			songFD = PlaySong(pQR.location, AUD_TYPE_NONE);
+		}
+		else
+		{
+			myAppModes.setPlayMode (PLAY_ACTION_STOP);
+			message = "PlayMusic.cpp :";
+			message.append(__func__);
+			message.append(":  No song to play");
+			myLog.print(logWarning, message);
+		}
 		returnValue = eventHandler();
 		if ((myAppModes.getPlayMode() == PLAY_ACTION_EXIT))
 			break;
 	}
-	message.append(": NetworkTemplate closing all connections and resting for 5 seconds.");
+	message.append(": Closing all connections and waiting for 5 seconds.");
 	myLog.print(logWarning, message);
 	CloseDBConnection();
 	sleep(5);
@@ -249,7 +277,8 @@ int main(int argc, char* const argv[])
 	server_thread.detach();
 	server.stop();
 	dataGramServer.Close();
-	message = __func__;
+	message = "PlayMusic.cpp :";
+	message.append(__func__);
 	message.append(": AirportTalk exiting Normally");
 	myLog.print(logWarning, message);
 }
@@ -260,35 +289,39 @@ int PlaySong(string audioFileName, data_type_t adt)
 	int bytesRead = 0;
 	int returnValue;
 
-	playMode = PLAY_ACTION_PLAY;
+	myAppModes.setPlayMode (PLAY_ACTION_PLAY);
 
 	songFD = auds.Open(audioFileName,adt);
-	message = __func__;
+	message = "PlayMusic.cpp :";
+	message.append(__func__);
 	message.append(": opening file:");
 	message.append(audioFileName);
 	myLog.print(logDebug, message);
 	if (songFD == 0) // error occurred
 	{
 		songFD = auds.Open(audioFileName,adt);
-		message = __func__;
+		message = "PlayMusic.cpp :";
+		message.append(__func__);
 		message.append(": opening file:");
 		message.append(audioFileName);
 		myLog.print(logError, message);
 		return (0);
 	}
-	while(playMode == PLAY_ACTION_PLAY)
+	while(myAppModes.getPlayMode() == PLAY_ACTION_PLAY )
 	{
-		message = __func__;
+		message = "PlayMusic.cpp :";
+		message.append(__func__);
 		message.append(": playMode == PLAY_ACTION_PLAY");
 //		myLog.print(logDebug, message);
-		bytesRead = auds.GetNextSample(); // this should get PCM data nad put all the info in the right place to send to ALSA Driver
+		bytesRead = auds.GetNextSample(); // this should get PCM data and put all the info in the right place to send to ALSA Driver
 		if ( bytesRead == 0)
 
 		{
-			message = __func__;
+			message = "PlayMusic.cpp :";
+			message.append(__func__);
 			message.append(" end of Audio file. No bytes read.");
 			myLog.print(logDebug, message);
-			playMode = PLAY_ACTION_NEXTSONG;
+			myAppModes.setPlayMode(PLAY_ACTION_NEXTSONG);
 		}
 		else
 		{
@@ -359,54 +392,59 @@ int eventHandler()
 		if(strstr(buffer,"quit") != NULL )
 		{
 			myAppModes.setPlayMode (PLAY_ACTION_QUIT);
-			message = __func__;
+			message = "PlayMusic.cpp :";
+			message.append(__func__);
 			message.append(": Play Quit Signal Received");
 			myLog.print(logWarning, message);
 		}
 		else if(strstr(buffer,"pause") != NULL )
 		{
 			myAppModes.setPlayMode (PLAY_ACTION_PAUSE);
-			message = __func__;
+			message = "PlayMusic.cpp :";
+			message.append(__func__);
 			message.append(": Play Pause Signal Received");
 			myLog.print(logWarning, message);
 		}
 		else if(strstr(buffer,"playautomatic") != NULL )
 		{
 
-			myAppModes.setNetworkMode (NETWORK_ACTION_CONNECT);
-			myAppModes.setPlayMode (PLAY_ACTION_PLAY);
-			message = __func__;
+//			myAppModes.setNetworkMode (NETWORK_ACTION_CONNECT);
+			myAppModes.setContinuous();
+			message = "PlayMusic.cpp :";
+			message.append(__func__);
 			message.append(": Play Automatic Signal Received");
 			myLog.print(logWarning, message);
 		}
 		else if(strstr(buffer,"playmanual") != NULL )
 		{
-
-			message = __func__;
+			myAppModes.setManual();
+			message = "PlayMusic.cpp :";
+			message.append(__func__);
 			message.append(": Play Manual Signal Received");
 			myLog.print(logWarning, message);
 		}
 		else if(strstr(buffer,"stop") != NULL )
 		{
 			myAppModes.setPlayMode (PLAY_ACTION_STOP);
-			message = __func__;
+			message = "PlayMusic.cpp :";
+			message.append(__func__);
 			message.append(": Play Stop Signal Received");
 			myLog.print(logWarning, message);
 		}
 		else if(strstr(buffer,"play") != NULL )
 		{
 			myAppModes.setPlayMode (PLAY_ACTION_PLAY);
-			myAppModes.setNetworkMode (NETWORK_ACTION_CONNECT);
-
-			message = __func__;
+//			myAppModes.setNetworkMode (NETWORK_ACTION_CONNECT);
+			message = "PlayMusic.cpp :";
+			message.append(__func__);
 			message.append(": Play Play Signal Received");
 			myLog.print(logWarning, message);
 		}
 		else if(strstr(buffer,"exit") != NULL )
 		{
 			myAppModes.setPlayMode (PLAY_ACTION_QUIT);
-
-			message = __func__;
+			message = "PlayMusic.cpp :";
+			message.append(__func__);
 			message.append(": Exit Signal Received");
 			myLog.print(logWarning, message);
 		}
@@ -414,7 +452,8 @@ int eventHandler()
 		else if( (ps = strstr(buffer,"volume")) != NULL )
 		{
 			iVolume = atoi(ps+7);
-			message = __func__;
+			message = "PlayMusic.cpp :";
+			message.append(__func__);
 			message.append(": Volume Signal Received with a value of:");
 			message.append(ps+7);
 			myLog.print(logWarning, message);
@@ -423,8 +462,8 @@ int eventHandler()
 		else if(strstr(buffer,"nextalbum") != NULL )
 		{
 			myAppModes.setPlayMode (PLAY_ACTION_NEXTALBUM);
-
-			message = __func__;
+			message = "PlayMusic.cpp :";
+			message.append(__func__);
 			message.append(": Next Album Signal Received");
 			myLog.print(logWarning, message);
 		}
@@ -432,8 +471,8 @@ int eventHandler()
 		{
 			myAppModes.setPlayMode (PLAY_ACTION_NEXTSONG);
 			returnValue = PLAY_ACTION_NEXTSONG;
-
-			message = __func__;
+			message = "PlayMusic.cpp :";
+			message.append(__func__);
 			message.append(": Next Song Signal Received");
 			myLog.print(logWarning, message);
 		}
@@ -441,7 +480,8 @@ int eventHandler()
 		{
 			myAppModes.setPlayMode (PLAY_ACTION_NEXTSONG);
 			returnValue = PLAY_ACTION_NEXTSONG;
-			message = __func__;
+			message = "PlayMusic.cpp :";
+			message.append(__func__);
 			message.append(": Next (Song) Signal Received");
 			myLog.print(logWarning, message);
 		}
@@ -451,7 +491,7 @@ int eventHandler()
 //			playMode = PLAY_ACTION_UPDATE;
 		}
 	}
-	usleep(1000); // let other processes have the CPU for 1000 microseconds
+	usleep(100); // let other processes have the CPU for 100 microseconds
 
 	return (returnValue);
 }

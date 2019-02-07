@@ -26,6 +26,7 @@ MusicDB::~MusicDB() {
 
 #include <time.h>
 #include <DLog.h>
+#include "ApplicationModes.h"
 
 unsigned char	*getval(unsigned char *);
 
@@ -33,9 +34,10 @@ unsigned char	*getval(unsigned char *);
 	MYSQL	dbaseConnection;
 	long rowOffset;
 	MYSQL_RES *activeAutomaticSongQueryResult;
-	int playAutomatic = 0; // 0 will not pick an automatic song. 1 will find a new song without anything in the play Q
+//	int playAutomatic = 0; // 0 will not pick an automatic song. 1 will find a new song without anything in the play Q
 
 	extern DLog myLog;
+	extern ApplicationModes myAppModes;
 
 int asciiToUtf8(char *string, size_t maxLen)
 {
@@ -225,7 +227,8 @@ struct playQRecord getNextAutomaticSongRecord()
 		message = __func__;
 		message.append(": queryAutomaticSong returned 0 setting autoplay to manual"); //Jon
 		myLog.print(logError, message);
-		playAutomatic = 0;
+		myAppModes.setManual();
+//		playAutomatic = 0;
 		pQR.id = 0;//MusicPlayQResultSet.getLong(1);
 		pQR.songID = 0;//MusicPlayQResultSet.getLong(2);
 		return (pQR);
@@ -356,18 +359,18 @@ struct playQRecord getNextSongRecord()
 	}
 	else
 	{
-		if (playAutomatic == 1)
+		if (myAppModes.getApplicationMode() == APPLICATION_ACTION_CONTINUOUS)
 		{
 			message = "MusicDB.cpp "; // Jon
 			message.append(__func__);
-			message.append(": (playAutomatic == 1) ");
+			message.append(": (ApplicationMode == APPLICATION_ACTION_CONTINUOUS) ");
 			myLog.print(logDebug, message);
 
 			pQR = getNextAutomaticSongRecord();
 			addSongToPlayQ(pQR.songID, "Automatic");
 			pQR = getNextPlayQRecord();
 		}
-		else
+		else //if not continuous then we wait for an item to show up in the play queue.
 		{
 			message = "MusicDB.cpp "; // Jon
 			message.append(__func__);
@@ -394,7 +397,7 @@ bool isSongAvailableInPlayQ()
 	queryPlayQResult = queryPlayQ();
 	nrows = mysql_num_rows(queryPlayQResult);
 	mysql_free_result(queryPlayQResult);
-	if ((nrows > 0) || (playAutomatic == 1))
+	if ((nrows > 0) || (myAppModes.getApplicationMode() == APPLICATION_ACTION_CONTINUOUS)) //playAutomatic == 1))
 	{
 		return (true);
 	}
@@ -438,7 +441,7 @@ struct playQRecord skipToNextAlbum()
 				i++;
 			}
 		}
-		else if(playAutomatic == 1) //items in Automatic Q
+		else if(myAppModes.getApplicationMode() == APPLICATION_ACTION_CONTINUOUS) // playAutomatic == 1) //items in Automatic Q
 		{
 			nextQR = getNextAutomaticSongRecord();
 			if (strcmp(pQR.album,nextQR.album)!=0)
