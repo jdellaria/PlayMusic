@@ -29,6 +29,7 @@ public:
 	bool logPrintScreen;
 	bool logPrintFile;
 	bool logPrintTime;
+	bool playContinuous;
 };
 
 #endif /* CONFIGURATIONFILE_H_ */

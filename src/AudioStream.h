@@ -79,6 +79,7 @@ public:
 	snd_pcm_t * OpenALSADriver(int numberOfChannels, int samplingRate, int numberOfFrames);
 	int CloseALSADriver();
 	int SendPCMToALSADriver();
+	void SetAlsaMasterVolume(long volume);
 
 	void *stream;
 	unsigned sample_rate;

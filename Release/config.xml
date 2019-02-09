@@ -6,3 +6,4 @@
 <logprintscreen>true</logprintscreen>
 <logprintfile>true</logprintfile>
 <logprinttime>true</logprinttime>
+<playContinuous>true</playContinuous>

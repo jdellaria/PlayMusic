@@ -33,6 +33,7 @@ configurationFile::configurationFile()
 	logPrintScreen = true;
 	logPrintFile = true;
 	logPrintTime = true;
+	playContinuous = false;
 }
 
 configurationFile::~configurationFile()
@@ -142,6 +143,7 @@ int configurationFile::getConfiguration(char *Name)
 	message.append(portElement->GetText());
 	myLog.print(logInformation, message);
 	logValue.append(portElement->GetText());
+
 	node = doc.FirstChild( "logprintscreen" );
 	if (!node)
 	{
@@ -244,6 +246,41 @@ int configurationFile::getConfiguration(char *Name)
 		logPrintTime = true;
 
 		message =  "logPrintTime = true";
+		myLog.print(logInformation, message);
+	}
+
+	node = doc.FirstChild( "playContinuous" );
+	if (!node)
+	{
+		message = "playContinuous child not found!! XML file is invalid\n.";
+		message.append(exampleXMLFile);
+		myLog.print(logError, message);
+		exit(0);
+	}
+	portElement = node->ToElement();
+	if (!portElement)
+	{
+		message = "playContinuous element not found!! XML file is invalid\n.";
+		message.append(exampleXMLFile);
+		myLog.print(logError, message);
+		exit(0);
+	}
+	message = "playContinuous element GetText:";
+	message.append(portElement->GetText());
+	myLog.print(logInformation, message);
+	myString = portElement->GetText();
+	if (myString.find("false")!=string::npos)
+	{
+		playContinuous = false;
+
+		message = "playContinuous = false";
+		myLog.print(logInformation, message);
+	}
+	if (myString.find("true")!=string::npos)
+	{
+		playContinuous = true;
+
+		message =  "playContinuous = true";
 		myLog.print(logInformation, message);
 	}
 

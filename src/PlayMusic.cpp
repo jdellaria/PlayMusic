@@ -98,11 +98,8 @@ configurationFile myConfig;
 ApplicationModes myAppModes;
 UDPServer dataGramServer;
 
-//playActions playMode = PLAY_ACTION_PLAY;
-MP3Stream mp3Stream;
+//MP3Stream mp3Stream;
 AudioStream auds;
-
-//extern int playAutomatic;
 
 int PlaySong(string audioFileName, data_type_t adt);
 int PlaySongS(string audioFileName, data_type_t adt);
@@ -203,7 +200,7 @@ int main(int argc, char* const argv[])
 
 
 	myAppModes.setPlayMode (PLAY_ACTION_PLAY);
-	myAppModes.setContinuous();
+//	myAppModes.setContinuous();
 //	myAppModes.setManual();
 //	myAppModes.setNetworkMode(NETWORK_ACTION_DISCONNECT);
 	message = "airportAddress is: ";
@@ -321,12 +318,11 @@ int PlaySong(string audioFileName, data_type_t adt)
 			message.append(__func__);
 			message.append(" end of Audio file. No bytes read.");
 			myLog.print(logDebug, message);
-			myAppModes.setPlayMode(PLAY_ACTION_NEXTSONG);
+			break;
 		}
 		else
 		{
 			auds.SendPCMToALSADriver();
-
 		}
 		returnValue = eventHandler();
 	}
@@ -370,6 +366,18 @@ int configApp()
 		message = "myLog.logValue = logError";
 		myLog.print(logInformation, message);
 	}
+	if (myConfig.playContinuous == true)
+	{
+		myAppModes.setContinuous();
+		message = "Continuous Play Mode";
+		myLog.print(logInformation, message);
+	}
+	else
+	{
+		myAppModes.setManual();
+		message = "Manual Play Mode";
+		myLog.print(logInformation, message);
+	}
 	return (1);
 }
 
@@ -391,6 +399,7 @@ int eventHandler()
 	{
 		if(strstr(buffer,"quit") != NULL )
 		{
+			returnValue = PLAY_ACTION_QUIT;
 			myAppModes.setPlayMode (PLAY_ACTION_QUIT);
 			message = "PlayMusic.cpp :";
 			message.append(__func__);
@@ -399,6 +408,7 @@ int eventHandler()
 		}
 		else if(strstr(buffer,"pause") != NULL )
 		{
+			returnValue = PLAY_ACTION_PAUSE;
 			myAppModes.setPlayMode (PLAY_ACTION_PAUSE);
 			message = "PlayMusic.cpp :";
 			message.append(__func__);
@@ -425,6 +435,7 @@ int eventHandler()
 		}
 		else if(strstr(buffer,"stop") != NULL )
 		{
+			returnValue = PLAY_ACTION_STOP;
 			myAppModes.setPlayMode (PLAY_ACTION_STOP);
 			message = "PlayMusic.cpp :";
 			message.append(__func__);
@@ -433,6 +444,7 @@ int eventHandler()
 		}
 		else if(strstr(buffer,"play") != NULL )
 		{
+			returnValue = PLAY_ACTION_PLAY;
 			myAppModes.setPlayMode (PLAY_ACTION_PLAY);
 //			myAppModes.setNetworkMode (NETWORK_ACTION_CONNECT);
 			message = "PlayMusic.cpp :";
@@ -442,6 +454,7 @@ int eventHandler()
 		}
 		else if(strstr(buffer,"exit") != NULL )
 		{
+			returnValue = PLAY_ACTION_QUIT;
 			myAppModes.setPlayMode (PLAY_ACTION_QUIT);
 			message = "PlayMusic.cpp :";
 			message.append(__func__);
@@ -452,6 +465,7 @@ int eventHandler()
 		else if( (ps = strstr(buffer,"volume")) != NULL )
 		{
 			iVolume = atoi(ps+7);
+			auds.SetAlsaMasterVolume(iVolume); //between 0 and 100
 			message = "PlayMusic.cpp :";
 			message.append(__func__);
 			message.append(": Volume Signal Received with a value of:");
@@ -461,7 +475,10 @@ int eventHandler()
 		}
 		else if(strstr(buffer,"nextalbum") != NULL )
 		{
+			returnValue = PLAY_ACTION_NEXTALBUM;
 			myAppModes.setPlayMode (PLAY_ACTION_NEXTALBUM);
+			skipToNextAlbum();
+			auds.mp3Stream.StopDecoder();
 			message = "PlayMusic.cpp :";
 			message.append(__func__);
 			message.append(": Next Album Signal Received");
@@ -469,8 +486,9 @@ int eventHandler()
 		}
 		else if(strstr(buffer,"nextsong") != NULL ) // next is for going to the next song via the web site... without finishing the song.
 		{
-			myAppModes.setPlayMode (PLAY_ACTION_NEXTSONG);
 			returnValue = PLAY_ACTION_NEXTSONG;
+			myAppModes.setPlayMode (PLAY_ACTION_NEXTSONG);
+			auds.mp3Stream.StopDecoder();
 			message = "PlayMusic.cpp :";
 			message.append(__func__);
 			message.append(": Next Song Signal Received");
@@ -478,8 +496,8 @@ int eventHandler()
 		}
 		else if(strstr(buffer,"next") != NULL )// next is for going to the next song naturally.
 		{
-			myAppModes.setPlayMode (PLAY_ACTION_NEXTSONG);
 			returnValue = PLAY_ACTION_NEXTSONG;
+			myAppModes.setPlayMode (PLAY_ACTION_NEXTSONG);
 			message = "PlayMusic.cpp :";
 			message.append(__func__);
 			message.append(": Next (Song) Signal Received");
