@@ -102,30 +102,97 @@ int AudioStream::Close()
 	return 0;
 }
 
-//void AudioStream::CloseALSADriver()
+
+
+
+
+
+
+//void set_alsa_volume(long vol)
 void AudioStream::SetAlsaMasterVolume(long volume)
 {
+    snd_mixer_t *m_handle;
+    snd_mixer_elem_t* m_elem;
+    string message;
+    string sVolume;
+    char buffer[33];
     long min, max;
-    snd_mixer_t *handle;
-    snd_mixer_selem_id_t *sid;
-    const char *card = "default";
-    const char *selem_name = "Master";
 
-    snd_mixer_open(&handle, 0);
-    snd_mixer_attach(handle, card);
-    snd_mixer_selem_register(handle, NULL, NULL);
-    snd_mixer_load(handle);
+    // Open an empty mixer
+    if (snd_mixer_open(&(m_handle), SND_MIXER_ELEM_SIMPLE) < 0) {
+		message = "AudioStream.cpp :";
+		message.append(__func__);
+		message.append("Error snd_mixer_open");
+		myLog.print(logError, message);
+        return;
+    }
 
-    snd_mixer_selem_id_alloca(&sid);
-    snd_mixer_selem_id_set_index(sid, 0);
-    snd_mixer_selem_id_set_name(sid, selem_name);
-    snd_mixer_elem_t* elem = snd_mixer_find_selem(handle, sid);
+    if (snd_mixer_attach(m_handle, "default") < 0) { // hw:0
+		message = "AudioStream.cpp :";
+		message.append(__func__);
+		message.append("Error snd_mixer_attach");
+		myLog.print(logError, message);
+//        printf("Error snd_mixer_attach");
+        return;
+    }
 
-    snd_mixer_selem_get_playback_volume_range(elem, &min, &max);
-    snd_mixer_selem_set_playback_volume_all(elem, volume * max / 100);
+    if (snd_mixer_selem_register(m_handle, NULL, NULL) < 0) {
+		message = "AudioStream.cpp :";
+		message.append(__func__);
+		message.append("Error snd_mixer_selem_register");
+		myLog.print(logError, message);
+//        printf("Error snd_mixer_selem_register");
+        return;
+    }
 
-    snd_mixer_close(handle);
+    // Load the mixer elements
+    if (snd_mixer_load(m_handle) < 0) {
+		message = "AudioStream.cpp :";
+		message.append(__func__);
+		message.append("Error snd_mixer_load");
+		myLog.print(logError, message);
+//        printf("Error snd_mixer_load");
+        return;
+    }
+
+    snd_mixer_selem_id_t *simpleElemId;
+    snd_mixer_selem_id_alloca(&simpleElemId);
+    snd_mixer_selem_id_set_index(simpleElemId, 0);
+    snd_mixer_selem_id_set_name(simpleElemId, "Master"); //PCM
+
+    m_elem = snd_mixer_find_selem(m_handle, simpleElemId);
+    if (m_elem == NULL) {
+		message = "AudioStream.cpp :";
+		message.append(__func__);
+		message.append("Error snd_mixer_find_selem");
+		myLog.print(logError, message);
+//        printf("Error snd_mixer_find_selem");
+        return;
+    }
+
+    if (snd_mixer_selem_get_playback_volume_range(m_elem, &min, &max) != 0)
+    {
+		message = "AudioStream.cpp :";
+		message.append(__func__);
+		message.append("Error snd_mixer_selem_get_playback_volume_range");
+		myLog.print(logError, message);
+    }
+
+
+    // Set the volume
+    if (snd_mixer_selem_set_playback_volume_all(m_elem, (volume*max/100)) == 0)
+    {
+		message = "AudioStream.cpp :";
+		message.append(__func__);
+		sprintf(buffer, "%lu", volume);
+//		sVolume << "ALSA volume level set to " << buffer;
+		message.append("ALSA volume level set to ");
+		message.append(buffer);
+		myLog.print(logDebug, message);
+
+    }
 }
+
 
 int AudioStream::CloseALSADriver()
 {
@@ -146,7 +213,8 @@ int AudioStream::SendPCMToALSADriver()
 
 	if ((pcm = snd_pcm_writei(pcm_handle, buff, frames)) == -EPIPE) // send sound to the ALSA driver
 	{
-		message = __func__;
+		message = "AudioStream.cpp :";
+		message.append(__func__);
 		message.append(" XRUN.");
 		myLog.print(logDebug, message);
 		snd_pcm_prepare(pcm_handle);

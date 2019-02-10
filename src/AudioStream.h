@@ -81,6 +81,7 @@ public:
 	int SendPCMToALSADriver();
 	void SetAlsaMasterVolume(long volume);
 
+
 	void *stream;
 	unsigned sample_rate;
 	void (*sigchld_cb)(void *, siginfo_t *);

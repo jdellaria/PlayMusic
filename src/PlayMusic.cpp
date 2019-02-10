@@ -384,7 +384,7 @@ int configApp()
 int eventHandler()
 {
 	int n;
-	int iVolume;
+	long iVolume;
 	char buffer[1024];
 	struct sockaddr_in from;
 	char *ps=NULL;
