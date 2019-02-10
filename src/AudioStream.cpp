@@ -116,7 +116,7 @@ void AudioStream::SetAlsaMasterVolume(long volume)
     string message;
     string sVolume;
     char buffer[33];
-    long min, max;
+    long min, max, tempVolume;
 
     // Open an empty mixer
     if (snd_mixer_open(&(m_handle), SND_MIXER_ELEM_SIMPLE) < 0) {
@@ -177,10 +177,28 @@ void AudioStream::SetAlsaMasterVolume(long volume)
 		message.append("Error snd_mixer_selem_get_playback_volume_range");
 		myLog.print(logError, message);
     }
+	message = "AudioStream.cpp :";
+	message.append(__func__);
+	sprintf(buffer, "%lu", min);
+	message.append("ALSA min value is ");
+	message.append(buffer);
+	sprintf(buffer, "%lu", max);
+	message.append(" and max value is ");
+	message.append(buffer);
+	myLog.print(logDebug, message);
 
-
+	tempVolume = volume*max/100;
+	message = "AudioStream.cpp :";
+	message.append(__func__);
+	message.append("Volume value (0-100) is ");
+	sprintf(buffer, "%lu", volume);
+	message.append(buffer);
+	message.append(" - Value sending to snd_mixer_selem_set_playback_volume_all is ");
+	sprintf(buffer, "%lu", tempVolume);
+	message.append(buffer);
+	myLog.print(logDebug, message);
     // Set the volume
-    if (snd_mixer_selem_set_playback_volume_all(m_elem, (volume*max/100)) == 0)
+    if (snd_mixer_selem_set_playback_volume_all(m_elem,tempVolume) == 0)
     {
 		message = "AudioStream.cpp :";
 		message.append(__func__);
