@@ -118,6 +118,24 @@ void AudioStream::SetAlsaMasterVolume(long volume)
     char buffer[33];
     long min, max, tempVolume;
 
+    if (volume > 100)
+    {
+		message = "AudioStream.cpp :";
+		message.append(__func__);
+		message.append(" Volume > 100... setting volume to 100");
+		myLog.print(logDebug, message);
+    	volume = 100;
+    }
+
+    if (volume < 0)
+    {
+		message = "AudioStream.cpp :";
+		message.append(__func__);
+		message.append(" Volume < 0... setting volume to 0");
+		myLog.print(logDebug, message);
+    	volume = 0;
+    }
+
     // Open an empty mixer
     if (snd_mixer_open(&(m_handle), SND_MIXER_ELEM_SIMPLE) < 0) {
 		message = "AudioStream.cpp :";
