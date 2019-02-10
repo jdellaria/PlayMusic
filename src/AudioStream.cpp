@@ -176,7 +176,7 @@ void AudioStream::SetAlsaMasterVolume(long volume)
     snd_mixer_selem_id_t *simpleElemId;
     snd_mixer_selem_id_alloca(&simpleElemId);
     snd_mixer_selem_id_set_index(simpleElemId, 0);
-    snd_mixer_selem_id_set_name(simpleElemId, "Master"); //PCM
+    snd_mixer_selem_id_set_name(simpleElemId, "PCM"); //PCM
 
     m_elem = snd_mixer_find_selem(m_handle, simpleElemId);
     if (m_elem == NULL) {
@@ -197,22 +197,22 @@ void AudioStream::SetAlsaMasterVolume(long volume)
     }
 	message = "AudioStream.cpp :";
 	message.append(__func__);
-	sprintf(buffer, "%lu", min);
+	sprintf(buffer, "%ld", min);
 	message.append("ALSA min value is ");
 	message.append(buffer);
-	sprintf(buffer, "%lu", max);
+	sprintf(buffer, "%ld", max);
 	message.append(" and max value is ");
 	message.append(buffer);
 	myLog.print(logDebug, message);
 
-	tempVolume = volume*max/100;
+	tempVolume = min + ((volume*(max-min))/100);
 	message = "AudioStream.cpp :";
 	message.append(__func__);
 	message.append("Volume value (0-100) is ");
-	sprintf(buffer, "%lu", volume);
+	sprintf(buffer, "%ld", volume);
 	message.append(buffer);
 	message.append(" - Value sending to snd_mixer_selem_set_playback_volume_all is ");
-	sprintf(buffer, "%lu", tempVolume);
+	sprintf(buffer, "%ld", tempVolume);
 	message.append(buffer);
 	myLog.print(logDebug, message);
     // Set the volume
@@ -220,7 +220,7 @@ void AudioStream::SetAlsaMasterVolume(long volume)
     {
 		message = "AudioStream.cpp :";
 		message.append(__func__);
-		sprintf(buffer, "%lu", volume);
+		sprintf(buffer, "%ld", tempVolume);
 //		sVolume << "ALSA volume level set to " << buffer;
 		message.append("ALSA volume level set to ");
 		message.append(buffer);

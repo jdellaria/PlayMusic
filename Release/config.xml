@@ -1,7 +1,7 @@
 <?xml version="1.0" standalone="no" ?>
 <!-- Configuration Parmeters -->
 <airportAddress>192.168.19.4</airportAddress>
-<logfilename>/home/jdellaria/Desktop/logPlayMusic.txt</logfilename>
+<logfilename>/home/pi/Desktop/logPlayMusic.txt</logfilename>
 <logvalue>logDebug</logvalue>
 <logprintscreen>true</logprintscreen>
 <logprintfile>true</logprintfile>
