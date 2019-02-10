@@ -30,6 +30,7 @@ public:
 	bool logPrintFile;
 	bool logPrintTime;
 	bool playContinuous;
+	std::string ALSAVolumeControlName;
 };
 
 #endif /* CONFIGURATIONFILE_H_ */

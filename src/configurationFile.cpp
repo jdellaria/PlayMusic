@@ -248,7 +248,7 @@ int configurationFile::getConfiguration(char *Name)
 		message =  "logPrintTime = true";
 		myLog.print(logInformation, message);
 	}
-
+// -----
 	node = doc.FirstChild( "playContinuous" );
 	if (!node)
 	{
@@ -283,5 +283,32 @@ int configurationFile::getConfiguration(char *Name)
 		message =  "playContinuous = true";
 		myLog.print(logInformation, message);
 	}
+
+	node = doc.FirstChild( "ALSAVolumeControlName" );
+	if (!node)
+	{
+		message = "ALSAVolumeControlName child not found!! XML file is invalid\n.";
+		message.append(exampleXMLFile);
+		myLog.print(logError, message);
+		exit(0);
+	}
+	portElement = node->ToElement();
+	if (!portElement)
+	{
+//		sprintf( message,"ALSAVolumeControlName element not found!! XML file is invalid\n.%s",exampleXMLFile);
+		message = "ALSAVolumeControlName element not found!! XML file is invalid\n.";
+		message.append(exampleXMLFile);
+		myLog.print(logError, message);
+		exit(0);
+	}
+//	sprintf( message, "ALSAVolumeControlName element GetText:%s", portElement->GetText() );
+
+	message = "ALSAVolumeControlName element GetText:";
+	message.append(portElement->GetText());
+
+	myLog.print(logInformation, message);
+	ALSAVolumeControlName.clear();
+	ALSAVolumeControlName.append(portElement->GetText());
+
 
 }

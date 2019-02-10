@@ -9,10 +9,12 @@
 #include "APMusic.h"
 #include "MP3Stream.h"
 #include "ApplicationModes.h"
+#include "configurationFile.h"
 #include <DLog.h>
 
 extern DLog myLog;
 extern ApplicationModes myAppModes;
+extern configurationFile myConfig;
 
 AudioStream::AudioStream() {
 	stream = 0;
@@ -113,6 +115,11 @@ void AudioStream::SetAlsaMasterVolume(long volume)
 {
     snd_mixer_t *m_handle;
     snd_mixer_elem_t* m_elem;
+
+
+//	snd_mixer_selem_id_t *sid;
+//	snd_mixer_elem_t *elem;
+
     string message;
     string sVolume;
     char buffer[33];
@@ -176,7 +183,19 @@ void AudioStream::SetAlsaMasterVolume(long volume)
     snd_mixer_selem_id_t *simpleElemId;
     snd_mixer_selem_id_alloca(&simpleElemId);
     snd_mixer_selem_id_set_index(simpleElemId, 0);
-    snd_mixer_selem_id_set_name(simpleElemId, "PCM"); //PCM
+ //   snd_mixer_selem_get_id(m_elem, selem_id);
+//    snd_mixer_selem_get_id(_snd_mixer_elem *, _snd_mixer_selem_id *)
+//    printf("   %s", snd_mixer_selem_id_get_name(selem_id));
+
+ //   snd_mixer_selem_id_get_name(selem_id);
+ //   const snd_mixer_selem_id_t *selem_id;
+	message = "***************** AudioStream.cpp :";
+	message.append(__func__);
+	message.append(" snd_mixer_selem_id_get_name is: ");
+	message.append(snd_mixer_selem_id_get_name(simpleElemId));
+	myLog.print(logDebug, message);
+
+    snd_mixer_selem_id_set_name(simpleElemId, myConfig.ALSAVolumeControlName.c_str()); //PCM or Master
 
     m_elem = snd_mixer_find_selem(m_handle, simpleElemId);
     if (m_elem == NULL) {
