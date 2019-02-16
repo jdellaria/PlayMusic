@@ -58,3 +58,12 @@ git commit -a -m "First Commit"
 git remote add origin https://github.com/jdellaria/PlayMusic.git
 
 git push -u origin master
+
+
+If mounting a USB drive on Raspberry Pi perform the folowing
+sudo mkdir /RAID
+sudo chmod -R 777 /RAID
+sudo fdisk -l    -> this will list the devices
+sudo ls -l /dev/disk/by-uuid  -> this will give you the uuid for making perminate changes in the etc/fstab file
+
+make changes in the /etc/fstab file to make changes for auto mounting
