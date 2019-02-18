@@ -259,7 +259,7 @@ int main(int argc, char* const argv[])
 			message = "PlayMusic.cpp :";
 			message.append(__func__);
 			message.append(":  No song to play");
-			myLog.print(logWarning, message);
+			myLog.print(logDebug, message);
 		}
 		returnValue = eventHandler();
 		if ((myAppModes.getPlayMode() == PLAY_ACTION_EXIT))
@@ -503,7 +503,38 @@ int eventHandler()
 			message.append(": Next (Song) Signal Received");
 			myLog.print(logWarning, message);
 		}
-
+		else if(strstr(buffer,"debug") != NULL )// next is for going to the next song naturally.
+		{
+			myLog.logValue = logDebug;
+			message = "PlayMusic.cpp :";
+			message.append(__func__);
+			message.append(" myLog.logValue = logDebug");
+			myLog.print(logInformation, message);
+		}
+		else if(strstr(buffer,"info") != NULL )// next is for going to the next song naturally.
+		{
+			myLog.logValue = logInformation;
+			message = "PlayMusic.cpp :";
+			message.append(__func__);
+			message.append(" myLog.logValue = logInformation");
+			myLog.print(logInformation, message);
+		}
+		else if(strstr(buffer,"warn") != NULL )// next is for going to the next song naturally.
+		{
+			myLog.logValue = logWarning;
+			message = "PlayMusic.cpp :";
+			message.append(__func__);
+			message.append(" myLog.logValue = logWarning");
+			myLog.print(logInformation, message);
+		}
+		else if(strstr(buffer,"warn") != NULL )// next is for going to the next song naturally.
+		{
+			myLog.logValue = logError;
+			message = "PlayMusic.cpp :";
+			message.append(__func__);
+			message.append(" myLog.logValue = logError");
+			myLog.print(logInformation, message);
+		}
 		else if(strstr(buffer,"update") != NULL )
 		{
 //			playMode = PLAY_ACTION_UPDATE;
