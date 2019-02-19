@@ -74,7 +74,10 @@ sudo ifconfig wlan0 up/down
 to set static IP address change each interface in /etc/dhcpcd.conf to:
    ***
 interface eth0
+
 static ip_address=192.168.19.5
+
 static routers=192.168.19.1
+
 static domain_name_servers=208.67.222.222 208.67.220.220
    ***
