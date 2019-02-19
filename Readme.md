@@ -67,3 +67,14 @@ sudo fdisk -l    -> this will list the devices
 sudo ls -l /dev/disk/by-uuid  -> this will give you the uuid for making perminate changes in the etc/fstab file
 
 make changes in the /etc/fstab file to make changes for auto mounting
+
+to bring up/down network conections:
+sudo ifconfig wlan0 up/down
+
+to set static IP address change each interface in /etc/dhcpcd.conf to:
+-----
+interface eth0
+static ip_address=192.168.19.5
+static routers=192.168.19.1
+static domain_name_servers=208.67.222.222 208.67.220.220
+-------
