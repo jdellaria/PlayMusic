@@ -84,7 +84,13 @@ static domain_name_servers=208.67.222.222 208.67.220.220
 
 To start the application automaicially from boot.
  copy musicServer.sh to /etc/init.d
- cd to /etc/rc3.d
- ln -s /etc/init.d/musicServer.sh S99musicServer.sh 
- cd to /etc/rc5.d
- ln -s /etc/init.d/musicServer.sh S99musicServer.sh 
+ 
+ sudo cp musicServer.sh /etc/init.d
+ 
+ sudo cd /etc/rc3.d
+ 
+ sudo ln -s /etc/init.d/musicServer.sh S99musicServer.sh 
+ 
+ sudo cd /etc/rc5.d
+ 
+ sudo ln -s /etc/init.d/musicServer.sh S99musicServer.sh 
