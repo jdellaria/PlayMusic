@@ -1,8 +1,8 @@
 #!/bin/bash
 
 ## Fill in name of program here.
-PROG="AirPortTalk"
-PROG_PATH="/home/jdellaria/workspace/AirPortTalk/Release" ## Not need, but sometimes helpful (if $PROG resides in /opt for example).
+PROG="PlayMusic"
+PROG_PATH="/home/jdellaria/Desktop/PlayMusic/Release" ## Not need, but sometimes helpful (if $PROG resides in /opt for example).
 PROG_ARGS="10000000" 
 PID_PATH="/var/run/"
 
@@ -14,8 +14,9 @@ then
 else
 	echo "$PROG is starting"
 	cd $PROG_PATH
-	$PROG_PATH/startMusicServer.sh
-	sleep 5
+##	$PROG_PATH/startMusicServer.sh
+	nohup $PROG_PATH/PlayMusic &
+##	sleep 5
 ## 	$PROG_PATH/playauto.sh
 ## 	echo "$PROG started with autoplay"
 fi
