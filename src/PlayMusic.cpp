@@ -123,6 +123,7 @@ int main(int argc, char* const argv[])
 	{
 		myConfig.getConfiguration("config.xml");
 	}
+	sleep (5); // wait for 5 seconds to make sure database and network connections are up and stable.
 
 	configApp();
 
