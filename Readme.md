@@ -67,16 +67,22 @@ sudo fdisk -l    -> this will list the devices
 sudo ls -l /dev/disk/by-uuid  -> this will give you the uuid for making perminate changes in the etc/fstab file. look for sdaX
 
 make changes in the /etc/fstab file to make changes for auto mounting
+
 Add to /etc/fstab
+
 /dev/disk/by-uuid/05b9950a-778e-4bc8-ad62-2e3ade8aa5bf  /RAID ext4  defaults,noatime  0 0
 
 
 Install DLirium Lib
+
 Install PlayMusic
+
 Install Alsa 
+
   sudo apt-get install libasound2-dev
 
 Install Mpg123
+
 Install Boost
 
 
