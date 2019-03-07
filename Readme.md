@@ -72,6 +72,12 @@ Add to /etc/fstab
 
 /dev/disk/by-uuid/05b9950a-778e-4bc8-ad62-2e3ade8aa5bf  /RAID ext4  defaults,noatime  0 0
 
+sudo mkdir /RAID 
+
+sudo chmod -R 777 /RAID
+
+sudo mount -a 
+
 
 Install DLirium Lib
 
