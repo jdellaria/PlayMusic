@@ -64,9 +64,21 @@ If mounting a USB drive on Raspberry Pi perform the folowing
 sudo mkdir /RAID
 sudo chmod -R 777 /RAID
 sudo fdisk -l    -> this will list the devices
-sudo ls -l /dev/disk/by-uuid  -> this will give you the uuid for making perminate changes in the etc/fstab file
+sudo ls -l /dev/disk/by-uuid  -> this will give you the uuid for making perminate changes in the etc/fstab file. look for sdaX
 
 make changes in the /etc/fstab file to make changes for auto mounting
+Add to /etc/fstab
+/dev/disk/by-uuid/05b9950a-778e-4bc8-ad62-2e3ade8aa5bf  /RAID ext4  defaults,noatime  0 0
+
+
+Install DLirium Lib
+Install PlayMusic
+Install Alsa 
+  sudo apt-get install libasound2-dev
+
+Install Mpg123
+Install Boost
+
 
 to bring up/down network conections:
 sudo ifconfig wlan0 up/down
@@ -83,14 +95,17 @@ static domain_name_servers=208.67.222.222 208.67.220.220
    ***
 
 To start the application automaicially from boot.
- copy musicServer.sh to /etc/init.d
+Make sure musicServer.sh is working by typing: 
+ ./musicServer.sh start -> music should start playing
+ 
+ -->copy musicServer.sh to /etc/init.d
  
  sudo cp musicServer.sh /etc/init.d
  
- sudo cd /etc/rc3.d
+ cd /etc/rc3.d
  
  sudo ln -s /etc/init.d/musicServer.sh S99musicServer.sh 
  
- sudo cd /etc/rc5.d
+ cd /etc/rc5.d
  
  sudo ln -s /etc/init.d/musicServer.sh S99musicServer.sh 
