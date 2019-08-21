@@ -1,9 +1,9 @@
 //============================================================================
-// Name        : AirPortMusic.cpp
+// Name        : PlayMusic.cpp
 // Author      : Jon Dellaria
 // Version     :
 // Copyright   : Your copyright notice
-// Description : Hello World in C++, Ansi-style
+
 //============================================================================
 
 #ifdef HAVE_CONFIG_H
@@ -211,9 +211,11 @@ int main(int argc, char* const argv[])
 	OpenDBConnection();
 //	playAutomatic = 1;
 
+int tries = 0;
 
 	while ((myAppModes.getPlayMode() != PLAY_ACTION_QUIT))
 	{
+
 		message = "PlayMusic.cpp :";
 		message.append(__func__);
 		message.append(": Wile Loop - ");
@@ -253,6 +255,19 @@ int main(int argc, char* const argv[])
 			message.append(pQR.location);
 			myLog.print(logInformation, message);
 			songFD = PlaySong(pQR.location, AUD_TYPE_NONE);
+			if (songFD == 0)
+			{
+				tries++;
+			}
+			else
+			{
+				tries = 0;
+			}
+			if (tries > 15)
+			{
+				myLog << "PlayMusic.cpp :" << __func__ << " Exiting becuase of fatal error" << DLogError;
+				myAppModes.setPlayMode(PLAY_ACTION_QUIT);
+			}
 		}
 		else
 		{
@@ -297,7 +312,6 @@ int PlaySong(string audioFileName, data_type_t adt)
 	myLog.print(logDebug, message);
 	if (songFD == 0) // error occurred
 	{
-		songFD = auds.Open(audioFileName,adt);
 		message = "PlayMusic.cpp :";
 		message.append(__func__);
 		message.append(": opening file:");

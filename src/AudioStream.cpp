@@ -28,6 +28,11 @@ AudioStream::~AudioStream() {
 }
 //static data_type_t get_data_type(const char *fname);
 
+inline bool  AudioStream::Exists(string audioFileName)
+{
+	return( access( audioFileName.c_str(), F_OK ) != -1 );
+}
+
 
 int AudioStream::Open(string audioFileName, data_type_t adt)
 {
@@ -36,6 +41,10 @@ int AudioStream::Open(string audioFileName, data_type_t adt)
 	string message;
 
 //	channels=2; //default is stereo
+	if (Exists(audioFileName) == false) // if file does not exist.. return 0
+	{
+		return(0);
+	}
 	OpenALSADriver(2, 44100, 1024); // channes = 2 sample rate = 44100 frames = 1024
 	if(adt==AUD_TYPE_NONE)
 	{

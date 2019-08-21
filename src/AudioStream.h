@@ -70,6 +70,7 @@ public:
 	AudioStream();
 	virtual ~AudioStream();
 
+	inline bool Exists(string audioFileName);
 	int WritePCM( __u8 *data, int size, data_source_t *ds);
 	int Open(string audioFileName, data_type_t adt);
 	int Close();
