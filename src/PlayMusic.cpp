@@ -353,14 +353,13 @@ int PlaySong(string audioFileName, data_type_t adt)
 
 int PlaySong(string audioFileName, data_type_t adt)  // orig
 {
-	__u8 *buf;
-	int size;
-	int returnValue;
 	string message;
-	char ibuffer [33];
-	string sbuffer;
+	int bytesRead = 0;
+	int returnValue;
 	LinuxCommand myCommand;
 	char errorMessageBuffer[2048];
+	myAppModes.setPlayMode (PLAY_ACTION_PLAY);
+
 
 //	songFD = mp3Stream.Open(audioFileName);
 //			auds.Open(audioFileName,adt);
@@ -384,15 +383,7 @@ int PlaySong(string audioFileName, data_type_t adt)  // orig
 		return (0);
 	}
 
-
-	message = __func__;
-	message.append(": opening file:");
-	message.append(audioFileName);
-	myLog.print(logDebug, message);
-	returnValue=0;
-	playMode = PLAY_ACTION_PLAY;
-
-	while(playMode == PLAY_ACTION_PLAY)
+	while(myAppModes.getPlayMode() == PLAY_ACTION_PLAY)
 	{
 		message = __func__;
 		message.append(": playMode == PLAY_ACTION_PLAY");
