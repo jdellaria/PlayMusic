@@ -94,6 +94,8 @@ int FDflags;
 
 #define GET_BIGENDIAN_INT(x) (*(__u8*)(x)<<24)|(*((__u8*)(x)+1)<<16)|(*((__u8*)(x)+2)<<8)|(*((__u8*)(x)+3))
 
+//#define NOAUDS
+
 configurationFile myConfig;
 ApplicationModes myAppModes;
 UDPServer dataGramServer;
@@ -102,7 +104,7 @@ UDPServer dataGramServer;
 AudioStream auds;
 
 int PlaySong(string audioFileName, data_type_t adt);
-int PlaySongS(string audioFileName, data_type_t adt);
+
 snd_pcm_t * OpenSound(unsigned char * buff, snd_pcm_uframes_t frames);
 
 
@@ -296,6 +298,7 @@ int tries = 0;
 	myLog.print(logWarning, message);
 }
 
+#ifndef NOAUDS
 int PlaySong(string audioFileName, data_type_t adt)
 {
 	string message;
@@ -344,6 +347,64 @@ int PlaySong(string audioFileName, data_type_t adt)
 	auds.Close();
 	return 0;
 }
+#endif
+
+#ifdef NOAUDS
+
+int PlaySong(string audioFileName, data_type_t adt)  // orig
+{
+	__u8 *buf;
+	int size;
+	int returnValue;
+	string message;
+	char ibuffer [33];
+	string sbuffer;
+	LinuxCommand myCommand;
+	char errorMessageBuffer[2048];
+
+//	songFD = mp3Stream.Open(audioFileName);
+//			auds.Open(audioFileName,adt);
+
+
+	const char *darg[4]={MP3PLAYER,NULL, NULL,NULL};
+	darg[1] = audioFileName.c_str();
+
+	message = __func__;
+	message.append(": Playing Song: ");
+	message.append(audioFileName);
+	myLog.print(logInformation, message);
+
+	myCommand.Execute(darg,errorMessageBuffer,sizeof(errorMessageBuffer)-2);
+	if (strlen(errorMessageBuffer) > 0)
+	{
+		return (-1); // on error errorMessageBuffer has the error string
+	}
+	else
+	{
+		return (0);
+	}
+
+
+	message = __func__;
+	message.append(": opening file:");
+	message.append(audioFileName);
+	myLog.print(logDebug, message);
+	returnValue=0;
+	playMode = PLAY_ACTION_PLAY;
+
+	while(playMode == PLAY_ACTION_PLAY)
+	{
+		message = __func__;
+		message.append(": playMode == PLAY_ACTION_PLAY");
+		myLog.print(logDebug, message);
+
+		eventHandler();
+
+	}
+
+}
+
+#endif
 
 #define MAIN_EVENT_TIMEOUT 3 // sec unit
 
