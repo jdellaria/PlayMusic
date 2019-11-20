@@ -15,7 +15,10 @@ else
 	echo "$PROG is starting"
 	cd $PROG_PATH
 ##	$PROG_PATH/startMusicServer.sh
-	nohup $PROG_PATH/PlayMusic &
+##	nohup $PROG_PATH/PlayMusic &
+	sudo -u pi nohup $PROG_PATH/PlayMusic &
+## the above command will run as the root user and sudo will drop down to the "pi" user. 
+## Obviously change the user and the command for your purposes.
 ##	sleep 5
 ## 	$PROG_PATH/playauto.sh
 ## 	echo "$PROG started with autoplay"
